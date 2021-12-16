@@ -1,0 +1,257 @@
+/* -*- mode: c -*- */
+#include <stdint.h>
+#include "128types.h"
+
+/* can't include fenv.h here */
+
+/* placeholders, will be redefined at instantiation time */
+typedef uint16_t Ti;
+typedef uint16_t Tui;
+typedef uint32_t To;
+typedef uint32_t Ts;
+
+static inline To MULWIDE(Ti x, Ti y) {
+	To d;
+
+	d = (To) x * (To) y;
+	return d;
+}
+
+static inline To MUL24(Ti x, Ti y) {
+  To d;
+
+  /* must be an unsigned type the same size as x and y */
+  /* bitwise operations on signed types is implementation-defined */
+  uint32_t xx, yy;
+
+  xx = extract_24(x);
+  yy = extract_24(y);
+
+  // implementation defined, assigning unsigned to signed. In gcc,
+  // this is okay
+  x = xx;
+  y = yy;
+
+  d = (To) x * (To) y;
+  return d;
+}
+
+static inline Ti SATURATE(Ti x) {
+  if(isnan(x)) return 0.0;
+
+  /* SAT(-0.0) = +0.0 from reading of spec for add.sat.f32 */
+  if(x <= 0.0)
+	return 0.0;
+  else if (x > 1.0)
+	return 1.0;
+  else
+	return x;
+}
+
+static inline Ti MAX(Ti x, Ti y) {
+  if(x < y)
+	return y;
+  else
+	return x;
+}
+
+static inline Ti MIN(Ti x, Ti y) {
+  if(x < y)
+	return x;
+  else
+	return y;
+}
+
+static inline Ti SUB_ROUND(Ti x, Ti y, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = x - y;
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti MUL_ROUND(Ti x, Ti y, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = x * y;
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti ADD_ROUND(Ti x, Ti y, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = x + y;
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti DIV_ROUND(Ti x, Ti y, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = x / y;
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti FMA_ROUND(Ti x, Ti y, Ti z, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = FMA(x, y, z); // double indirection!
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti RCP_ROUND(Ti x, int mode) {
+  Ti t;
+  fesetround(mode); //TODO: check for errors
+  t = 1.0 / x;
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline Ti SQRT_ROUND(Ti x, int mode) {
+  Ti t;
+  /* not sure sqrt() respects rounding mode? */
+  fesetround(mode); //TODO: check for errors
+  t = SQRT(x); // double indirection!
+  fesetround(FE_TONEAREST); // assume rn is default
+  return t;
+}
+
+static inline void extractAndZeroExt_4(uint32_t src, Ti *dst) {
+  for(int i = 0; i < 4; i++) {
+	// unsigned 8 -> anything will always be zero extension
+	dst[i] = (Ti) ((uint8_t) (src & 0xff));
+	src >>= 8;
+  }
+}
+
+static inline void extractAndSignExt_4(uint32_t src, Ti *dst) {
+  for(int i = 0; i < 4; i++) {
+	// signed 8 -> anything will always be sign extension
+	dst[i] = (Ti) ((int8_t) (src & 0xff));
+	src >>= 8;
+  }
+}
+
+static inline void extractAndZeroExt_2(uint32_t src, Ti *dst) {
+  for(int i = 0; i < 2; i++) {
+	// unsigned 8 -> anything will always be zero extension
+	dst[i] = (Ti) ((uint16_t) (src & 0xffff));
+	src >>= 16;
+  }
+}
+
+static inline void extractAndSignExt_2(uint32_t src, Ti *dst) {
+  for(int i = 0; i < 2; i++) {
+	// signed 8 -> anything will always be sign extension
+	dst[i] = (Ti) ((int16_t) (src & 0xffff));
+	src >>= 16;
+  }
+}
+
+static inline Ti ADD_CARRY(Ti a, Ti b, Ti cf, int *outcf) {
+  Tui ua, ub, ures, umax;
+  int f;
+
+  /* "behaviour is the same for signed and unsigned", so convert to unsigned */
+  ua = (Tui) a;
+  ub = (Tui) b;
+  umax = MAXVALUE(umax);
+
+  ures = ua + ub + (Tui) cf;
+
+  *outcf = (ua > (umax - ub)) || ((cf == 1) && ((ua + ub) == umax));
+
+  // this casting back should return the 2s complement signed integer?
+  // are all intXX_t types *are* always 2s complement: C99 7.18?
+  // or should we use memcpy to be safe [both here and above?]
+  return (Ti) ures;
+}
+
+static inline Ts ADD_CARRY_STRUCT(Ti a, Ti b, Ti cf) {
+  Tui ua, ub, ures, umax;
+  int f;
+  int outcf;
+
+  /* "behaviour is the same for signed and unsigned", so convert to unsigned */
+  ua = (Tui) a;
+  ub = (Tui) b;
+  umax = MAXVALUE(umax);
+
+  ures = ua + ub + (Tui) cf;
+
+  outcf = (ua > (umax - ub)) || ((cf == 1) && ((ua + ub) == umax));
+
+  // this casting back should return the 2s complement signed integer?
+  // are all intXX_t types *are* always 2s complement: C99 7.18?
+  // or should we use memcpy to be safe [both here and above?]
+  return (Ts) {(Ti) ures, outcf};
+}
+
+
+static inline Ti SUB_CARRY(Ti a, Ti b, Ti cf, int *outcf) {
+  Tui ua, ub, ures;
+  int f;
+
+  /* "behaviour is the same for signed and unsigned", so convert to unsigned */
+  ua = (Tui) a;
+  ub = (Tui) b;
+
+  ures = ua - (ub + (Tui) cf);
+
+  *outcf = (ub > ua) || ((cf == 1) && (ua == ub));
+
+  // this casting back should return the 2s complement signed integer?
+  // are all intXX_t types *are* always 2s complement: C99 7.18?
+  // or should we use memcpy to be safe [both here and above?]
+  return (Ti) ures;
+}
+
+static inline Ts SUB_CARRY_STRUCT(Ti a, Ti b, Ti cf) {
+  Tui ua, ub, ures;
+  int f;
+  int outcf;
+
+  /* "behaviour is the same for signed and unsigned", so convert to unsigned */
+  ua = (Tui) a;
+  ub = (Tui) b;
+
+  ures = ua - (ub + (Tui) cf);
+
+  outcf = (ub > ua) || ((cf == 1) && (ua == ub));
+
+  // this casting back should return the 2s complement signed integer?
+  // are all intXX_t types *are* always 2s complement: C99 7.18?
+  // or should we use memcpy to be safe [both here and above?]
+  return (Ts) {(Ti) ures, outcf};
+}
+
+static inline Ti MACHINE_SPECIFIC_execute_rem_divide_by_neg(Ti a, Ti b) {
+  // TODO: what if b is INT_MIN?
+  return a % ABSOLUTE(b);
+}
+
+static inline Ti SHL(Ti a, uint32_t b) {
+  if(b >= INTWIDTH(a)) {
+    // Shifting by bitwidth is not defined in C. However, PTX
+    // documentation says "greater than N are clamped to N", so we
+    // believe it is defined in PTX.
+    b = INTWIDTH(a);
+    a <<= (b - 1);
+    return a << 1;
+  } else {
+    return a << b;
+  }
+}
+
+static inline Ti SHR(Ti a, uint32_t b) {
+  if(b >= INTWIDTH(a)) {
+    b = INTWIDTH(a);
+    a >>= (b - 1);
+    return a >> 1;
+  } else {
+    return a >> b;
+  }
+}

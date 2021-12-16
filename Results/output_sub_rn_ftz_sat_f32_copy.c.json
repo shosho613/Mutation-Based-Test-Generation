@@ -1,0 +1,20 @@
+{
+    "mutator_pass_on_existing": {
+        "wall_time": 4.468888537026942,
+        "total_mutations": 167,
+        "mutations_killed": 143,
+        "existing_test_suite_name": "../ROCetta/ptx-semantics-tests/v6.5/inputs/f32_2.ssv"
+    },
+    "equivalence_checker": {
+        "wall_time": 460.4244836969301,
+        "num_tests_gen_pre_dd": 167,
+        "num_tests_gen_post_dd": 93,
+        "suite_filename": "new_inputs_sub_rn_ftz_sat_f32"
+    },
+    "mutator_pass_on_new": {
+        "wall_time": 5.2615408156998456,
+        "total_mutations": 167,
+        "mutations_killed": 164,
+        "new_test_suite_name": "new_inputs_sub_rn_ftz_sat_f32"
+    }
+}

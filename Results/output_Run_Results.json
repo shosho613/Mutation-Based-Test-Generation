@@ -1,0 +1,62 @@
+{
+    "abs_f32": {
+        "mutator_pass_on_existing": {
+            "wall_time": 8.108131485059857,
+            "total_mutations": 70,
+            "mutations_killed": 65,
+            "existing_test_suite_name": "../ROCetta/ptx-semantics-tests/v6.5/inputs/f32_1.ssv"
+        },
+        "equivalence_checker": {
+            "wall_time": 807.4593757749535,
+            "num_tests_gen_pre_dd": 70,
+            "num_tests_gen_post_dd": 22,
+            "suite_filename": "new_inputs_abs_f32"
+        },
+        "mutator_pass_on_new": {
+            "wall_time": 5.906182947102934,
+            "total_mutations": 70,
+            "mutations_killed": 65,
+            "new_test_suite_name": "new_inputs_abs_f32"
+        }
+    },
+    "add_sat_f32": {
+        "mutator_pass_on_existing": {
+            "wall_time": 9.093778874725103,
+            "total_mutations": 128,
+            "mutations_killed": 125,
+            "existing_test_suite_name": "../ROCetta/ptx-semantics-tests/v6.5/inputs/f32_2.ssv"
+        },
+        "equivalence_checker": {
+            "wall_time": 1147.6800526250154,
+            "num_tests_gen_pre_dd": 128,
+            "num_tests_gen_post_dd": 57,
+            "suite_filename": "new_inputs_add_sat_f32"
+        },
+        "mutator_pass_on_new": {
+            "wall_time": 6.848504435271025,
+            "total_mutations": 128,
+            "mutations_killed": 125,
+            "new_test_suite_name": "new_inputs_add_sat_f32"
+        }
+    },
+    "add_rm_ftz_sat_f32": {
+        "mutator_pass_on_existing": {
+            "wall_time": 9.834714176133275,
+            "total_mutations": 167,
+            "mutations_killed": 143,
+            "existing_test_suite_name": "../ROCetta/ptx-semantics-tests/v6.5/inputs/f32_2.ssv"
+        },
+        "equivalence_checker": {
+            "wall_time": 1231.2382679539733,
+            "num_tests_gen_pre_dd": 167,
+            "num_tests_gen_post_dd": 93,
+            "suite_filename": "new_inputs_add_rm_ftz_sat_f32"
+        },
+        "mutator_pass_on_new": {
+            "wall_time": 4.712501780129969,
+            "total_mutations": 167,
+            "mutations_killed": 164,
+            "new_test_suite_name": "new_inputs_add_rm_ftz_sat_f32"
+        }
+    }
+}
