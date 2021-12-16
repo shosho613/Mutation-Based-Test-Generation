@@ -1,0 +1,36 @@
+<html lang="en"> <head> 
+               <meta charset="UTF-8">
+        <title>Analysis for add_rm_ftz_sat_f32.MUT117.c</title>
+        <style>
+        </style>
+        </head> <body><script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script><h1>Analysis for add_rm_ftz_sat_f32.MUT117.c</h1><h2>Input Information</h2><h4>Input 1: 0x1.fffff414a9d3cp-97
+Classified as: normal</h4><h4>Input 2: 0x1.80000547eaaa1p-64
+Classified as: normal</h4>
+<h4>Oracle Output: 0x1.80000547eaaa1p-64
+Classified as: normal</h4>
+<h4>Mutated Output: 0x1.0000000000000p+0
+Classified as: normal</h4><h3>Oracle Function</h3><pre class="prettyprint">float execute_add_rm_ftz_sat_f32(float src1, float src2)
+{
+  float tmp_dst;
+  float dst;
+  src1 = FTZ(src1);
+  src2 = FTZ(src2);
+  tmp_dst = SATURATE(ADD_ROUND(src1, src2, FE_DOWNWARD));
+  tmp_dst = FTZ(tmp_dst);
+  dst = tmp_dst;
+  return dst;
+}
+
+</pre><h3>Mutated Function</h3><pre class="prettyprint">float execute_add_rm_ftz_sat_f32(float src1, float src2)
+{
+  float tmp_dst;
+  float dst;
+  src1 = FTZ(src1);
+  src2 = FTZ(src2);
+  tmp_dst = SATURATE(ADD_ROUND(src1, src2, FE_DOWNWARD));
+  tmp_dst = 1;
+  dst = tmp_dst;
+  return dst;
+}
+
+</pre></body> </html>
